@@ -29,4 +29,18 @@ public:
 
 	UFUNCTION()
 	void OnInterruptedCallback();
+
+protected:
+	FName GetNextSection();
+	void StartComboTimer();
+	void CheckComboInput();			// 콤보 관련 시간 확인용
+
+protected:
+	UPROPERTY()		// 스마트 포인터 동작시킬려고
+	TObjectPtr<class UABComboActionData> CurrentComboData;
+
+	uint8 CurrentCombo = 0;
+	FTimerHandle ComboTimerHandle;
+	bool HasNextComboInput = false;
+
 };
