@@ -41,7 +41,7 @@ FGameplayAbilityTargetDataHandle AABTA_Trace::MakeTargetData() const
 	FCollisionQueryParams Parmas(SCENE_QUERY_STAT(UABTA_Trace), false, Character);
 	const FVector Forward = Character->GetActorForwardVector();
 	const FVector Start = Character->GetActorLocation() + Forward * Character->GetCapsuleComponent()->GetScaledCapsuleRadius();
-	const FVector End = Start + Forward + AttackRange;
+	const FVector End = Start + Forward * AttackRange;
 
 	bool HitDetected = GetWorld()->SweepSingleByChannel(OutHitResult, Start, End, FQuat::Identity, CCHANNEL_ABACTION, FCollisionShape::MakeSphere(AttackRadius), Parmas);
 
