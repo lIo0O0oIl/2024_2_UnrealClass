@@ -2,11 +2,13 @@
 
 
 #include "Player/ABGASPlayerState.h"
-#include <AbilitySystemComponent.h>
+#include "AbilitySystemComponent.h"
+#include "Attribute/ABCharacterAttribute.h"
 
 AABGASPlayerState::AABGASPlayerState()
 {
 	ASC = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("ASC"));
+	AttributeSet = CreateDefaultSubobject<UABCharacterAttribute>(TEXT("AttributeSet"));
 }
 
 UAbilitySystemComponent* AABGASPlayerState::GetAbilitySystemComponent() const

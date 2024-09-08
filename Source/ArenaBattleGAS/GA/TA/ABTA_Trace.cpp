@@ -7,6 +7,10 @@
 #include <Components/CapsuleComponent.h>
 #include <Physics/ABCollision.h>
 #include <DrawDebugHelpers.h>
+#include "AbilitySystemComponent.h"
+#include "Attribute/ABCharacterAttribute.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "ArenaBattleGAS.h"
 
 AABTA_Trace::AABTA_Trace()
 {
@@ -34,9 +38,23 @@ FGameplayAbilityTargetDataHandle AABTA_Trace::MakeTargetData() const
 {
 	ACharacter* Character = CastChecked<ACharacter>(SourceActor);
 
+	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(SourceActor);
+	if (!ASC)
+	{
+		ABGAS_LOG(LogABGAS, Error, TEXT("ASC not found!"));
+		return FGameplayAbilityTargetDataHandle();
+	}
+
+	const UABCharacterAttribute* AttributeSet = ASC->GetSet<UABCharacterAttribute>();
+	if (!AttributeSet)
+	{
+		ABGAS_LOG(LogABGAS, Error, TEXT("ABCharacterAttributeSet not found!"));
+		return FGameplayAbilityTargetDataHandle();
+	}
+
 	FHitResult OutHitResult;
-	const float AttackRange = 100.0f;
-	const float AttackRadius = 50.0f;
+	const float AttackRange = AttributeSet->GetAttackRange();
+	const float AttackRadius = AttributeSet->GetAttackRadius();
 
 	FCollisionQueryParams Parmas(SCENE_QUERY_STAT(UABTA_Trace), false, Character);
 	const FVector Forward = Character->GetActorForwardVector();
