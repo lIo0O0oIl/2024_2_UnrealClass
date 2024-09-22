@@ -5,6 +5,10 @@
 #include "AbilitySystemComponent.h"
 #include "Player/ABGASPlayerState.h"
 #include <EnhancedInputComponent.h>
+#include "UI/ABGASUserWidget.h"
+#include "UI/ABGASWidgetComponent.h"
+#include <Attribute/ABCharacterAttribute.h>
+#include "Tag/ABGameplayTag.h"
 
 AABGASCharacterPlayer::AABGASCharacterPlayer()
 {
@@ -15,6 +19,28 @@ AABGASCharacterPlayer::AABGASCharacterPlayer()
 	{
 		ComboActionMontage = ComboActionMontageRef.Object;
 	}
+
+	HpBar = CreateDefaultSubobject<UABGASWidgetComponent>(TEXT("Widget"));
+	HpBar->SetupAttachment(GetMesh());
+	HpBar->SetRelativeLocation(FVector(0.0f, 0.0f, 180.0f));
+
+	static ConstructorHelpers::FClassFinder<UUserWidget> HpBarWidgetRef(TEXT("/Game/ArenaBattle/UI/WBP_HpBar.WBP_HpBar_C"));
+	if (HpBarWidgetRef.Class)
+	{
+		HpBar->SetWidgetClass(HpBarWidgetRef.Class);
+		HpBar->SetWidgetSpace(EWidgetSpace::Screen);			// 빌보드 타입의 UI
+		HpBar->SetDrawSize(FVector2D(200.0f, 20.0f));
+		HpBar->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> WeaponMeshRef(TEXT("/Game/InfinityBladeWeapons/Weapons/Blade/Swords/Blade_BlackWyrmBlade/SK_Blade_BlackWyrmBlade.SK_Blade_BlackWyrmBlade"));
+	if (WeaponMeshRef.Object)
+	{
+		WeaponMesh = WeaponMeshRef.Object;
+	}
+
+	WeaponRange = 75.0f;
+	WeaponAttackRate = 100.0f;
 }
 
 UAbilitySystemComponent* AABGASCharacterPlayer::GetAbilitySystemComponent() const
@@ -31,6 +57,15 @@ void AABGASCharacterPlayer::PossessedBy(AController* NewController)
 	{
 		ASC = GASPS->GetAbilitySystemComponent();
 		ASC->InitAbilityActorInfo(GASPS, this);
+
+		ASC->GenericGameplayEventCallbacks.FindOrAdd(ABTAG_EVENT_CHARACTER_WEAPONEQUIP).AddUObject(this, &AABGASCharacterPlayer::EquipWeapon);
+		ASC->GenericGameplayEventCallbacks.FindOrAdd(ABTAG_EVENT_CHARACTER_WEAPONUNEQUIP).AddUObject(this, &AABGASCharacterPlayer::UnequipWeapon);
+
+		const UABCharacterAttribute* CurrentAttributeSet = ASC->GetSet<UABCharacterAttribute>();
+		if (CurrentAttributeSet)
+		{
+			CurrentAttributeSet->OnOutOfHealth.AddDynamic(this, &ThisClass::OnOutOfHealth);		// ThisClass 말 그대로 나
+		}
 
 		for (const auto& StartAbility : StartAbilities)
 		{
@@ -92,5 +127,38 @@ void AABGASCharacterPlayer::GASInputReleased(int32 InputId)
 		{
 			ASC->AbilitySpecInputReleased(*Spec);
 		}
+	}
+}
+
+void AABGASCharacterPlayer::OnOutOfHealth()
+{
+	SetDead();
+}
+
+void AABGASCharacterPlayer::EquipWeapon(const FGameplayEventData* EventData)
+{
+	if (Weapon)
+	{
+		Weapon->SetSkeletalMesh(WeaponMesh);
+
+		const float CurrentAttackRange = ASC->GetNumericAttributeBase(UABCharacterAttribute::GetAttackRangeAttribute());
+		const float CurrentAttackRate = ASC->GetNumericAttributeBase(UABCharacterAttribute::GetAttackRateAttribute());
+
+		ASC->SetNumericAttributeBase(UABCharacterAttribute::GetAttackRangeAttribute(), CurrentAttackRange + WeaponRange);
+		ASC->SetNumericAttributeBase(UABCharacterAttribute::GetAttackRateAttribute(), CurrentAttackRate + WeaponAttackRate);
+	}
+}
+
+void AABGASCharacterPlayer::UnequipWeapon(const FGameplayEventData* EventData)
+{
+	if (Weapon)
+	{
+		Weapon->SetSkeletalMesh(nullptr);
+
+		const float CurrentAttackRange = ASC->GetNumericAttributeBase(UABCharacterAttribute::GetAttackRangeAttribute());
+		const float CurrentAttackRate = ASC->GetNumericAttributeBase(UABCharacterAttribute::GetAttackRateAttribute());
+
+		ASC->SetNumericAttributeBase(UABCharacterAttribute::GetAttackRangeAttribute(), CurrentAttackRange - WeaponRange);
+		ASC->SetNumericAttributeBase(UABCharacterAttribute::GetAttackRateAttribute(), CurrentAttackRate - WeaponAttackRate);
 	}
 }

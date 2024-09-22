@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Character/ABCharacterPlayer.h"
 #include "AbilitySystemInterface.h"
+#include "Abilities/GameplayAbilityTypes.h"
 #include "ABGASCharacterPlayer.generated.h"
 
 /**
@@ -25,6 +26,12 @@ public:
 	void GASInputPressed(int32 InputId);
 	void GASInputReleased(int32 InputId);
 
+	UFUNCTION()
+	virtual void OnOutOfHealth();
+
+	void EquipWeapon(const FGameplayEventData* EventData);
+	void UnequipWeapon(const FGameplayEventData* EventData);
+
 protected:
 	UPROPERTY(EditAnywhere, Category = GAS)
 	TObjectPtr<class UAbilitySystemComponent> ASC;
@@ -34,4 +41,16 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = GAS)
 	TMap<int32, TSubclassOf<class UGameplayAbility>> StartInputAbilities;
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<class UABGASWidgetComponent> HpBar;
+
+	UPROPERTY(EditAnywhere, Category = Weapon)
+	TObjectPtr<class USkeletalMesh> WeaponMesh;
+
+	UPROPERTY(EditAnywhere, Category = Weapon)
+	float WeaponRange;
+
+	UPROPERTY(EditAnywhere, Category = Weapon)
+	float WeaponAttackRate;
 };

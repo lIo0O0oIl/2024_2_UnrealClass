@@ -26,4 +26,7 @@ protected:
 protected:
 	UPROPERTY(EditAnywhere, Meta = (Categories = Event))
 	FGameplayTag TriggerGameplayTag;
+
+	UPROPERTY(EditAnywhere)
+	float ComboAttackLevel;
 };
